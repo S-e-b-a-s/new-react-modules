@@ -12,6 +12,9 @@ import SnackbarAlert from "../components/SnackbarAlert";
 import LoadingButton from "@mui/lab/LoadingButton";
 
 const SubirExcelMetas = () => {
+    useEffect(() => {
+        document.title = "Subir Excel Metas";
+    }, []);
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileName, setFileName] = useState("Example");
     const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -52,7 +55,7 @@ const SubirExcelMetas = () => {
             formData.append("file", selectedFile);
 
             try {
-                const response = await fetch("http://172.16.5.10:8000/goals/upload-excel/", {
+                const response = await fetch("http://172.16.5.10:8000/goals/excel-goals/", {
                     method: "POST",
                     body: formData,
                 });

@@ -6,7 +6,7 @@ import AsignacionMetas from "./routes/AsignacionMetas";
 import CssBaseline from "@mui/material/CssBaseline";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import SubirExcelMetas from "./routes/SubirExcelMetas";
-
+import ErrorPage from "./routes/ErrorPage";
 const theme = createTheme({
     typography: {
         fontFamily: [
@@ -39,16 +39,18 @@ const theme = createTheme({
 
 const router = createBrowserRouter([
     {
-        path: "/",
-        element: <div>Hello world!</div>,
-    },
-    {
         path: "/asignacion-metas",
         element: <AsignacionMetas />,
+        errorElement: <ErrorPage />,
     },
     {
         path: "/subir-excel-metas",
         element: <SubirExcelMetas />,
+        errorElement: <ErrorPage />,
+    },
+    {
+        path: "*",
+        element: <ErrorPage />,
     },
 ]);
 

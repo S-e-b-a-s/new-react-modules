@@ -2,17 +2,21 @@ import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import SaveIcon from "@mui/icons-material/Save";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SnackbarAlert from "../components/SnackbarAlert";
 import LoadingButton from "@mui/lab/LoadingButton";
 
 export default function AsignacionMetas() {
+    useEffect(() => {
+        document.title = "Asignacion de Metas";
+    }, []);
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const handleSave = async () => {
+    const handleSave = async (event) => {
+        event.preventDefault();
         setLoading(true);
         try {
             // Create an array of objects with the campaign and value properties
@@ -90,11 +94,12 @@ export default function AsignacionMetas() {
                 </Typography>
             </Box>
             <Box sx={{ display: "flex", justifyContent: "flex-end", width: "94%" }}>
-                <LoadingButton loadingPosition="start" loading={loading} startIcon={<SaveIcon />} onClick={handleSave}>
+                <LoadingButton loadingPosition="start" loading={loading} startIcon={<SaveIcon />} type="submit" form="meta-form">
                     Guardar
                 </LoadingButton>
             </Box>
             <Box
+                component="form"
                 sx={{
                     display: "grid",
                     textAlign: "center",
@@ -103,6 +108,8 @@ export default function AsignacionMetas() {
                     p: "15px",
                     height: "70vh",
                 }}
+                id="meta-form"
+                onSubmit={handleSave}
             >
                 {inputs.map((input, index) => (
                     <Box key={index}>
@@ -110,7 +117,7 @@ export default function AsignacionMetas() {
                             label={input.label}
                             sx={{ width: "70%" }}
                             variant="filled"
-                            required
+                            required={true}
                             autoComplete="off"
                             type="text"
                             onChange={(event) => {
