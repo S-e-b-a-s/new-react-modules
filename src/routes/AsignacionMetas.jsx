@@ -119,6 +119,11 @@ export default function AsignacionMetas() {
                             variant="filled"
                             required={true}
                             autoComplete="off"
+                            onKeyDown={(event) => {
+                                if (!/^[0-9.]$/.test(event.key) && event.key !== "Backspace" && event.key !== "Delete" && event.key !== "Tab" && event.key !== "Enter") {
+                                    event.preventDefault();
+                                }
+                            }}
                             type="text"
                             onChange={(event) => {
                                 const newValue = event.target.value;
