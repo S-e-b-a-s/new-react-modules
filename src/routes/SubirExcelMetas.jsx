@@ -55,14 +55,22 @@ const SubirExcelMetas = () => {
             formData.append("file", selectedFile);
 
             try {
-                const response = await fetch("http://172.16.0.114:8030/goals/excel-goals/", {
+                const response = await fetch("http://172.16.5.10:8000/goals/", {
                     method: "POST",
                     body: formData,
                 });
 
                 setLoading(false);
-
+                console.log(response);
                 if (!response.ok) {
+                    if (response.status === 500) {
+                        console.error("Lo sentimos, se ha producido un error inesperado.");
+                        setOpenSnackbar(true);
+                        setSnackbarSeverity("error");
+                        setSnackbarMessage("Lo sentimos, se ha producido un error inesperado");
+                        throw new Error(response.statusText);
+                    }
+
                     const data = await response.json();
                     console.error("Message: " + data.message + " Asesor: " + data.Asesor + " Error: " + data.error);
                     setOpenSnackbar(true);
