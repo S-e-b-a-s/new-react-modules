@@ -69,6 +69,13 @@ const SubirExcelMetas = () => {
                         setSnackbarSeverity("error");
                         setSnackbarMessage("Lo sentimos, se ha producido un error inesperado");
                         throw new Error(response.statusText);
+                    } else if (response.status === 400) {
+                        const data = await response.json();
+                        console.error("Lo sentimos, se ha producido un error inesperado.");
+                        setOpenSnackbar(true);
+                        setSnackbarSeverity("error");
+                        setSnackbarMessage(data.message);
+                        throw new Error(response.statusText);
                     }
 
                     const data = await response.json();
