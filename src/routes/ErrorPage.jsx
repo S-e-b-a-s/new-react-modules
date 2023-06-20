@@ -21,7 +21,7 @@ export default function ErrorPage() {
                 😔 Oops!
             </Typography>
             <Typography variant="subtitle1">Lo sentimos, se ha producido un error inesperado.</Typography>
-            <Typography variant="subtitle2">
+            <Typography sx={{ textAlign: "center" }} variant="subtitle2">
                 <i>{error.statusText || error.message}</i>
             </Typography>
         </Box>
