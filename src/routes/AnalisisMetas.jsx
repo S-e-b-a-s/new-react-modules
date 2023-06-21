@@ -47,6 +47,10 @@ const AnalisisMetas = () => {
                             ...row,
                             created_at: row.created_at.substring(0, 10),
                             accepted_at: row.accepted_at === null ? "Sin Aceptar" : "Aceptada",
+                            clean_desk: row.clean_desk === "" ? "En Ejecución" : row.clean_desk,
+                            quality: row.quality === "" ? "En Ejecución" : row.quality,
+                            result: row.result === "0.00%" ? "En Ejecución" : row.result,
+                            total: row.total === "" ? "En Ejecución" : row.total,
                         };
                     });
                     setRows(modifiedData);
@@ -60,12 +64,13 @@ const AnalisisMetas = () => {
 
     const columns = [
         { field: "cedula", headerName: "Cedula", width: 140 },
+        { field: "campaign", headerName: "Campaña", width: 140 },
         { field: "clean_desk", headerName: "Clean Desk", width: 140 },
         { field: "quality", headerName: "Calidad", width: 140 },
         { field: "result", headerName: "Resultado", width: 140 },
         { field: "total", headerName: "Total", width: 140 },
         { field: "created_at", headerName: "Fecha de Creación", width: 140 },
-        { field: "accepted_at", headerName: "Estado de la Meta", width: 250 },
+        { field: "accepted_at", headerName: "Estado de la Meta", width: 140 },
     ];
 
     const handleCloseSnackbar = (event, reason) => {
