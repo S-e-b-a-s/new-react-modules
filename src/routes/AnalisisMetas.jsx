@@ -12,7 +12,7 @@ const AnalisisMetas = () => {
     useEffect(() => {
         const handleSave = async () => {
             try {
-                const response = await fetch("http://172.16.5.10:8000/goals/", {
+                const response = await fetch("http://172.16.5.11:8000/goals/", {
                     method: "GET",
                 });
 
@@ -46,11 +46,13 @@ const AnalisisMetas = () => {
                         return {
                             ...row,
                             created_at: row.created_at.substring(0, 10),
-                            accepted_at: row.accepted_at === null ? "Sin Aceptar" : "Aceptada",
+                            accepted: row.accepted == 0 ? "Rechazada" : row.accepted == 1 ? "Aceptada" : "En espera",
                             clean_desk: row.clean_desk === "" ? "En Ejecución" : row.clean_desk,
                             quality: row.quality === "" ? "En Ejecución" : row.quality,
                             result: row.result === "0.00%" ? "En Ejecución" : row.result,
                             total: row.total === "" ? "En Ejecución" : row.total,
+                            accepted_execution:
+                                row.total != "" ? "En ejecucion" : row.accepted_execution == 0 ? "Rechazada" : row.accepted_execution == 1 ? "Aceptada" : "En espera",
                         };
                     });
                     setRows(modifiedData);
@@ -70,7 +72,8 @@ const AnalisisMetas = () => {
         { field: "result", headerName: "Resultado", width: 140 },
         { field: "total", headerName: "Total", width: 140 },
         { field: "created_at", headerName: "Fecha de Creación", width: 140 },
-        { field: "accepted_at", headerName: "Estado de la Meta", width: 140 },
+        { field: "accepted", headerName: "Estado de la Meta", width: 140 },
+        { field: "accepted_execution", headerName: "Estado de la Ejecucion de la Meta", width: 140 },
     ];
 
     const handleCloseSnackbar = (event, reason) => {

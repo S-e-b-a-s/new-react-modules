@@ -55,7 +55,7 @@ const SubirExcelMetas = () => {
             formData.append("file", selectedFile);
 
             try {
-                const response = await fetch("http://172.16.5.10:8000/goals/", {
+                const response = await fetch("http://172.16.5.11:8000/goals/", {
                     method: "POST",
                     body: formData,
                 });
