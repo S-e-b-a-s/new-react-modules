@@ -64,7 +64,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <RouterProvider router={router} />
+            <AnalisisMetas />
         </ThemeProvider>
     </React.StrictMode>
 );
