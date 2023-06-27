@@ -7,25 +7,26 @@ const AnalisisMetas = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [coordinator, setCoordinator] = useState("");
+    // const [coordinator, setCoordinator] = useState("");
     const [rows, setRows] = useState([]);
 
     useEffect(() => {
-        fetch("https://intranet.cyc-bpo.com/getSessionValue.php")
-            .then((response) => response.text())
-        .then((data) => {
-                console.log(data);
-                if (data === "No ha accedido al sistema") {
-                    window.location.href = "https://intranet.cyc-bpo.com/";
-                } else {
-                    setCoordinator(data);
-                }
-            });
+        // fetch("https://intranet.cyc-bpo.com/getSessionValue.php")
+        //     .then((response) => response.text())
+        // .then((data) => {
+        //         console.log(data);
+        //         if (data === "No ha accedido al sistema") {
+        //             window.location.href = "https://intranet.cyc-bpo.com/";
+        //         } else {
+        //             setCoordinator(data);
+        //         }
+        //     });
 
         const handleSave = async () => {
             try {
-                const encodedCoordinator = encodeURIComponent(coordinator);
-                const response = await fetch(`http://172.16.5.11:8000/goals/?coordinator=${encodedCoordinator}`, {
+                // const encodedCoordinator = encodeURIComponent(coordinator);
+                // const response = await fetch(`http://172.16.5.11:8000/goals/?coordinator=${encodedCoordinator}`, {
+                const response = await fetch(`http://172.16.5.11:8000/goals/`, {
                     method: "GET",
                 });
 
