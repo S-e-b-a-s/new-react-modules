@@ -26,7 +26,7 @@ const AnalisisMetas = () => {
             try {
                 // const encodedCoordinator = encodeURIComponent(coordinator);
                 // const response = await fetch(`http://172.16.5.11:8000/goals/?coordinator=${encodedCoordinator}`, {
-                const response = await fetch(`http://172.16.5.11:8000/goals/`, {
+                const response = await fetch(`https://api.cyc-bpo.com/goals/`, {
                     method: "GET",
                 });
 
@@ -66,7 +66,13 @@ const AnalisisMetas = () => {
                             result: row.result === "0.00%" ? "En Ejecución" : row.result,
                             total: row.total === "" ? "En Ejecución" : row.total,
                             accepted_execution:
-                                row.total != "" ? "En ejecucion" : row.accepted_execution == 0 ? "Rechazada" : row.accepted_execution == 1 ? "Aceptada" : "En espera",
+                                row.total == null && row.accepted_execution == null
+                                    ? "En ejecucion"
+                                    : row.accepted_execution == 0
+                                    ? "Rechazada"
+                                    : row.accepted_execution == 1
+                                    ? "Aceptada"
+                                    : "En espera",
                         };
                     });
                     setRows(modifiedData);

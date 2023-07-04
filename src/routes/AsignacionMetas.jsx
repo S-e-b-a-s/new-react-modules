@@ -28,7 +28,7 @@ export default function AsignacionMetas() {
             // Convert the array to JSON format
             const metaAsignarJSON = JSON.stringify(metaAsignarArray);
 
-            const response = await fetch("http://172.16.0.114:8030/goals/", {
+            const response = await fetch("https://172.16.0.114/goals/", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: metaAsignarJSON,
