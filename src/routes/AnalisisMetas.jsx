@@ -1,5 +1,5 @@
 import { Container, Typography } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import SnackbarAlert from "../components/SnackbarAlert";
 import { useState, useEffect } from "react";
 
@@ -7,26 +7,26 @@ const AnalisisMetas = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const [snackbarMessage, setSnackbarMessage] = useState("");
-    // const [coordinator, setCoordinator] = useState("");
+    const [coordinator, setCoordinator] = useState("");
     const [rows, setRows] = useState([]);
 
     useEffect(() => {
-        // fetch("https://intranet.cyc-bpo.com/getSessionValue.php")
-        //     .then((response) => response.text())
-        // .then((data) => {
-        //         console.log(data);
-        //         if (data === "No ha accedido al sistema") {
-        //             window.location.href = "https://intranet.cyc-bpo.com/";
-        //         } else {
-        //             setCoordinator(data);
-        //         }
-        //     });
+        const fetchData = async () => {
+            const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
+            const data = await response.text();
+            console.log(data);
+            if (data === "No ha accedido al sistema") {
+                window.location.href = "https://intranet.cyc-bpo.com/";
+            } else {
+                setCoordinator(data);
+            }
+        };
+        fetchData();
 
         const handleSave = async () => {
             try {
-                // const encodedCoordinator = encodeURIComponent(coordinator);
-                // const response = await fetch(`http://172.16.5.11:8000/goals/?coordinator=${encodedCoordinator}`, {
-                const response = await fetch(`https://api.cyc-bpo.com/goals/`, {
+                const encodedCoordinator = encodeURIComponent("FAVIAN SIERRA");
+                const response = await fetch(`https://api.cyc-bpo.com/goals/?coordinator=${encodedCoordinator}`, {
                     method: "GET",
                 });
 
@@ -117,7 +117,19 @@ const AnalisisMetas = () => {
             <Typography sx={{ textAlign: "center", pb: "15px", color: "primary.main", fontWeight: "500" }} variant={"h4"}>
                 Analisis de Metas
             </Typography>
-            <DataGrid sx={{ maxHeight: "600px" }} rows={rows} columns={columns} getRowId={(row) => row.cedula} />
+            <DataGrid
+                sx={{ maxHeight: "600px" }}
+                rows={rows}
+                columns={columns}
+                slots={{ toolbar: GridToolbar }}
+                slotProps={{
+                    toolbar: {
+                        showQuickFilter: true,
+                        quickFilterProps: { debounceMs: 500 },
+                    },
+                }}
+                getRowId={(row) => row.cedula}
+            />
             <SnackbarAlert open={openSnackbar} onClose={handleCloseSnackbar} severity={snackbarSeverity} message={snackbarMessage} />
         </Container>
     );
