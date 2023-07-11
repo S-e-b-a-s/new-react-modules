@@ -1,8 +1,24 @@
-import { Container, Typography } from "@mui/material";
-import { DataGrid, GridToolbar, GridActionsCellItem } from "@mui/x-data-grid";
+import { Container, Typography, Button, Box } from "@mui/material";
 import SnackbarAlert from "../components/SnackbarAlert";
 import { useState, useEffect, useCallback } from "react";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import {
+    DataGrid,
+    GridActionsCellItem,
+    GridToolbarContainer,
+    GridToolbarColumnsButton,
+    GridToolbarFilterButton,
+    GridToolbarExport,
+    GridToolbarDensitySelector,
+    GridToolbarQuickFilter,
+    GridRowModes,
+    GridRowEditStopReasons,
+} from "@mui/x-data-grid";
+import AddCircleOutlineOutlinedIcon from "@mui/icons-material/AddCircleOutlineOutlined";
+import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
+import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import ModalAddMetas from "./ModalAddMetas";
 
 const AnalisisMetas = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -10,6 +26,11 @@ const AnalisisMetas = () => {
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [coordinator, setCoordinator] = useState("");
     const [rows, setRows] = useState([]);
+    const [rowModesModel, setRowModesModel] = useState({});
+
+    const [open, setOpen] = useState(false);
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => setOpen(false);
 
     // const fetchData = async () => {
     //     const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
@@ -68,7 +89,7 @@ const AnalisisMetas = () => {
                         const formattedValue = formatter.format(value);
                         row.quantity = formattedValue;
                     } else if (row.quantity < 1) {
-                        row.quantity = row.quantity * 100 + "%";
+                        row.quantity = Math.round(row.quantity * 100) + "%";
                     }
                     return {
                         ...row,
@@ -99,8 +120,8 @@ const AnalisisMetas = () => {
         handleSave();
     }, []);
 
-    const handleDeleteClick = (cedula) => () => {
-        const handleDelete = async () => {
+    const handleDeleteClick = async (cedula) => {
+        try {
             const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${cedula}`, {
                 method: "DELETE",
             });
@@ -115,14 +136,17 @@ const AnalisisMetas = () => {
                 setSnackbarSeverity("error");
                 setSnackbarMessage("Error al eliminar la meta: " + response.status + " " + response.statusText);
             }
-        };
-        handleDelete();
+        } catch (error) {
+            console.error(error);
+            setOpenSnackbar(true);
+            setSnackbarSeverity("error");
+            setSnackbarMessage("Error al eliminar la meta: " + error.message);
+        }
     };
 
     const columns = [
         { field: "cedula", headerName: "Cedula", width: 100 },
-        // { field: "name", headerName: "Nombre", width: 140 },
-        { field: "quantity", headerName: "Meta", width: 110, editable: true },
+        { field: "quantity", headerName: "Meta", width: 140, editable: true },
         { field: "clean_desk", headerName: "Clean Desk", width: 80, editable: true },
         { field: "quality", headerName: "Calidad", width: 80, editable: true },
         { field: "result", headerName: "Resultado", width: 80, editable: true },
@@ -133,11 +157,30 @@ const AnalisisMetas = () => {
         {
             field: "actions",
             type: "actions",
-            headerName: "Actions",
+            headerName: "Acciones",
             width: 100,
             cellClassName: "actions",
             getActions: ({ id }) => {
-                return [<GridActionsCellItem key={id} icon={<DeleteOutlineOutlinedIcon />} label="Delete" onClick={handleDeleteClick(id)} color="inherit" />];
+                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+                if (isInEditMode) {
+                    return [
+                        <GridActionsCellItem
+                            icon={<SaveOutlinedIcon />}
+                            label="Save"
+                            key={id}
+                            sx={{
+                                color: "primary.main",
+                            }}
+                            onClick={handleSaveClick(id)}
+                        />,
+                        <GridActionsCellItem key={id} icon={<CancelOutlinedIcon />} label="Cancel" className="textPrimary" onClick={handleCancelClick(id)} />,
+                    ];
+                }
+
+                return [
+                    <GridActionsCellItem key={id} icon={<EditOutlinedIcon />} label="Edit" onClick={handleEditClick(id)} />,
+                    <GridActionsCellItem key={id} icon={<DeleteOutlineOutlinedIcon />} label="Delete" onClick={() => handleDeleteClick(id)} />,
+                ];
             },
         },
     ];
@@ -149,6 +192,26 @@ const AnalisisMetas = () => {
         setOpenSnackbar(false);
     };
 
+    const handleSaveClick = (id) => () => {
+        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+    };
+
+    const handleEditClick = (id) => () => {
+        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+    };
+
+    const handleCancelClick = (id) => () => {
+        setRowModesModel({
+            ...rowModesModel,
+            [id]: { mode: GridRowModes.View, ignoreModifications: true },
+        });
+
+        const editedRow = rows.find((row) => row.id === id);
+        if (editedRow.isNew) {
+            setRows(rows.filter((row) => row.id !== id));
+        }
+    };
+
     const handleProcessRowUpdateError = useCallback((error) => {
         console.error(error);
         setOpenSnackbar(true);
@@ -157,14 +220,18 @@ const AnalisisMetas = () => {
     }, []);
 
     const processRowUpdate = useCallback(async (newRow) => {
+        // const updatedRow = { ...newRow, isNew: false };
+        // setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
+        // console.log(updatedRow);
+        // return updatedRow;
         // Format the quantity value
         if (newRow.quantity.includes("%")) {
-            const value = parseFloat(newRow.quantity.replace("%", ""));
+            newRow.quantity = parseFloat(newRow.quantity.replace("%", "")) / 100;
+        } else {
+            const formattedValue = newRow.quantity;
+            const value = parseInt(formattedValue.replace(/\D/g, ""), 10);
             newRow.quantity = value;
         }
-        const formattedValue = newRow.quantity;
-        const value = parseInt(formattedValue.replace(/\D/g, ""), 10);
-        newRow.quantity = value;
 
         // Format the date value
         const fields = ["clean_desk", "quality", "result", "total"];
@@ -202,7 +269,6 @@ const AnalisisMetas = () => {
                 throw new Error(response.statusText);
             } else if (response.status === 200) {
                 const data = await response.json();
-                console.log(data);
                 setOpenSnackbar(true);
                 setSnackbarSeverity("success");
                 setSnackbarMessage("Meta actualizada correctamente");
@@ -213,6 +279,49 @@ const AnalisisMetas = () => {
             console.error(error);
         }
     }, []);
+
+    function CustomToolbar(props) {
+        const { setRows, setRowModesModel } = props;
+
+        const handleClick = () => {
+            setOpen(true);
+            // const cedula = Math.floor(Math.random() * 100000) + 1;
+            // setRows((oldRows) => [
+            //     ...oldRows,
+            //     { cedula: cedula, quantity: "", clean_desk: "", quality: "", result: "", total: "", last_update: "", accepted: "", accepted_execution: "", isNew: true },
+            // ]);
+
+            // setRowModesModel((oldModel) => ({
+            //     ...oldModel,
+            //     [cedula]: { mode: GridRowModes.Edit, fieldToFocus: "clean_desk" },
+            // }));
+        };
+
+        return (
+            <GridToolbarContainer>
+                <GridToolbarColumnsButton />
+                <GridToolbarFilterButton />
+                <GridToolbarDensitySelector />
+                <GridToolbarExport />
+                <Button color="primary" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={handleClick}>
+                    Añadir registro
+                </Button>
+                <Box sx={{ textAlign: "end", flex: "1" }}>
+                    <GridToolbarQuickFilter />
+                </Box>
+            </GridToolbarContainer>
+        );
+    }
+
+    const handleRowModesModelChange = (newRowModesModel) => {
+        setRowModesModel(newRowModesModel);
+    };
+
+    const handleRowEditStop = (params, event) => {
+        if (params.reason === GridRowEditStopReasons.rowFocusOut) {
+            event.defaultMuiPrevented = true;
+        }
+    };
 
     return (
         <Container
@@ -225,20 +334,27 @@ const AnalisisMetas = () => {
                 flexDirection: "column",
             }}
         >
+            <ModalAddMetas handleClose={handleClose} open={open} />
             <Typography sx={{ textAlign: "center", pb: "15px", color: "primary.main", fontWeight: "500" }} variant={"h4"}>
                 Análisis de Metas
             </Typography>
             <DataGrid
-                sx={{ maxHeight: "600px" }}
                 rows={rows}
+                editMode="row"
                 columns={columns}
+                sx={{ maxHeight: "600px" }}
+                rowModesModel={rowModesModel}
+                onRowEditStop={handleRowEditStop}
                 processRowUpdate={processRowUpdate}
+                onRowModesModelChange={handleRowModesModelChange}
                 onProcessRowUpdateError={handleProcessRowUpdateError}
-                slots={{ toolbar: GridToolbar }}
+                slots={{
+                    toolbar: CustomToolbar,
+                }}
                 slotProps={{
                     toolbar: {
-                        showQuickFilter: true,
-                        quickFilterProps: { debounceMs: 500 },
+                        setRows,
+                        setRowModesModel,
                     },
                 }}
                 getRowId={(row) => row.cedula}
