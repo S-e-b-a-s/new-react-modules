@@ -21,6 +21,23 @@ const SubirExcelMetas = () => {
     const [snackbarSeverity, setSnackbarSeverity] = useState("success");
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true); // Add a loading state
+
+    const fetchData = async () => {
+        const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
+        const data = await response.text();
+        console.log(data);
+
+        if (data == "Acceso permitido.") {
+            setIsLoading(true);
+        } else if (data == "No ha accedido al sistema.") {
+            window.location.href = "https://intranet.cyc-bpo.com/";
+            return;
+        } else {
+            setIsLoading(true);
+        }
+    };
+    fetchData();
 
     const onDrop = useCallback((acceptedFiles) => {
         setSelectedFile(acceptedFiles[0]);
@@ -61,7 +78,6 @@ const SubirExcelMetas = () => {
                 });
 
                 setLoading(false);
-                console.log(response);
                 if (!response.ok) {
                     if (response.status === 500) {
                         console.error("Lo sentimos, se ha producido un error inesperado.");
@@ -107,80 +123,86 @@ const SubirExcelMetas = () => {
     };
 
     return (
-        <Box sx={{ width: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-            <Typography variant="h6" sx={{ color: "primary.main", mb: "55px", fontSize: "30px" }}>
-                CARGUE BASE DE DATOS METAS ASESORES
-            </Typography>
-            <Box
-                sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    cursor: "pointer",
-                    width: "70%",
-                    height: "50vh",
-                    border: isDragActive ? "2px dashed #0076A8" : "2px dashed #ccc",
-                    borderRadius: "8px",
-                    p: "20px",
-                    color: "#ccc",
-                    backgroundColor: "#fafafa",
-                    transition: "border-color 0.2s ease-in-out",
-                    "&:hover": {
-                        borderColor: "#0076A8",
-                        color: "#0076A8",
-                    },
-                }}
-                {...getRootProps()}
-            >
-                <input {...getInputProps()} />
-                {isDragActive ? (
-                    <Box
-                        sx={{
-                            textAlign: "center",
-                            color: "#0076a8",
-                        }}
-                    >
-                        <CloudUploadIcon sx={{ fontSize: "150px", color: "primary.main" }} />
-                        <Typography sx={{ color: "primary.main" }} variant="subtitle2">
-                            Suelta el archivo aquí ...
-                        </Typography>{" "}
-                    </Box>
-                ) : (
-                    <Box
-                        sx={{
-                            textAlign: "center",
-                            transition: "all .6s ease",
-                        }}
-                    >
-                        <UploadFileIcon
-                            sx={{
-                                fontSize: "150px",
-                            }}
-                        />
-                        <Typography variant="subtitle2">Arrastre y suelte el archivo aquí, o haga clic para seleccionar el archivo</Typography>
-                    </Box>
-                )}
-            </Box>
-            <Collapse sx={{ width: "70%" }} in={acceptedFiles.length > 0}>
-                <Box
-                    sx={{
-                        pt: "15px",
-                        display: "flex",
-                        justifyContent: "flex-start",
-                        alignItems: "center",
-                        gap: "25px",
-                    }}
-                >
-                    <Typography variant="h6" sx={{ color: "primary.main", fontSize: "16px" }}>
-                        {fileName}
+        <>
+            {isLoading ? (
+                <Box sx={{ width: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+                    <Typography variant="h6" sx={{ color: "primary.main", mb: "55px", fontSize: "30px" }}>
+                        CARGUE BASE DE DATOS METAS ASESORES
                     </Typography>
-                    <LoadingButton startIcon={<SaveIcon />} onClick={handleSave} loading={loading} loadingPosition="start">
-                        Guardar
-                    </LoadingButton>{" "}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            cursor: "pointer",
+                            width: "70%",
+                            height: "50vh",
+                            border: isDragActive ? "2px dashed #0076A8" : "2px dashed #ccc",
+                            borderRadius: "8px",
+                            p: "20px",
+                            color: "#ccc",
+                            backgroundColor: "#fafafa",
+                            transition: "border-color 0.2s ease-in-out",
+                            "&:hover": {
+                                borderColor: "#0076A8",
+                                color: "#0076A8",
+                            },
+                        }}
+                        {...getRootProps()}
+                    >
+                        <input {...getInputProps()} />
+                        {isDragActive ? (
+                            <Box
+                                sx={{
+                                    textAlign: "center",
+                                    color: "#0076a8",
+                                }}
+                            >
+                                <CloudUploadIcon sx={{ fontSize: "150px", color: "primary.main" }} />
+                                <Typography sx={{ color: "primary.main" }} variant="subtitle2">
+                                    Suelta el archivo aquí ...
+                                </Typography>{" "}
+                            </Box>
+                        ) : (
+                            <Box
+                                sx={{
+                                    textAlign: "center",
+                                    transition: "all .6s ease",
+                                }}
+                            >
+                                <UploadFileIcon
+                                    sx={{
+                                        fontSize: "150px",
+                                    }}
+                                />
+                                <Typography variant="subtitle2">Arrastre y suelte el archivo aquí, o haga clic para seleccionar el archivo</Typography>
+                            </Box>
+                        )}
+                    </Box>
+                    <Collapse sx={{ width: "70%" }} in={acceptedFiles.length > 0}>
+                        <Box
+                            sx={{
+                                pt: "15px",
+                                display: "flex",
+                                justifyContent: "flex-start",
+                                alignItems: "center",
+                                gap: "25px",
+                            }}
+                        >
+                            <Typography variant="h6" sx={{ color: "primary.main", fontSize: "16px" }}>
+                                {fileName}
+                            </Typography>
+                            <LoadingButton startIcon={<SaveIcon />} onClick={handleSave} loading={loading} loadingPosition="start">
+                                Guardar
+                            </LoadingButton>{" "}
+                        </Box>
+                    </Collapse>
+                    <SnackbarAlert open={openSnackbar} onClose={handleCloseSnackbar} severity={snackbarSeverity} message={snackbarMessage} />
                 </Box>
-            </Collapse>
-            <SnackbarAlert open={openSnackbar} onClose={handleCloseSnackbar} severity={snackbarSeverity} message={snackbarMessage} />
-        </Box>
+            ) : (
+                (window.location.href = "https://intranet.cyc-bpo.com/")
+            )}
+        </>
     );
 };
 

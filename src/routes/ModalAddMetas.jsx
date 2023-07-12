@@ -5,6 +5,8 @@ import Modal from "@mui/material/Modal";
 import Fade from "@mui/material/Fade";
 import { TextField } from "@mui/material";
 import { useState } from "react";
+import SnackbarAlert from "../components/SnackbarAlert";
+import PropTypes from "prop-types";
 
 const style = {
     position: "absolute",
@@ -34,8 +36,23 @@ const inputs = [
     { name: "total", label: "Total", type: "text", value: "", required: false },
 ];
 
-const ModalAddMetas = ({ handleClose, open }) => {
+const ModalAddMetas = ({ handleClose, open, handleSave }) => {
+    ModalAddMetas.propTypes = {
+        handleClose: PropTypes.func.isRequired,
+        open: PropTypes.bool.isRequired,
+        handleSave: PropTypes.func.isRequired,
+    };
+    const [openSnackbar, setOpenSnackbar] = useState(false);
+    const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+    const [snackbarMessage, setSnackbarMessage] = useState("");
     const [inputValues, setInputValues] = useState(inputs.reduce((acc, input) => ({ ...acc, [input.name]: "" }), {}));
+
+    const handleCloseSnackbar = (event, reason) => {
+        if (reason === "clickaway") {
+            return;
+        }
+        setOpenSnackbar(false);
+    };
 
     const handleInputChange = (event) => {
         const { name, value } = event.target;
@@ -44,39 +61,51 @@ const ModalAddMetas = ({ handleClose, open }) => {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        // try {
-        //     const response = await fetch(`https://insights-api.cyc-bpo.com/goals/`, {
-        //         method: "POST",
-        //     });
-        //     if (response.status === 204) {
-        //         setRows(rows.filter((row) => row.cedula !== cedula));
-        //         setOpenSnackbar(true);
-        //         setSnackbarSeverity("success");
-        //         setSnackbarMessage("Registro eliminado correctamente");
-        //         handleSave();
-        //     } else {
-        //         setOpenSnackbar(true);
-        //         setSnackbarSeverity("error");
-        //         setSnackbarMessage("Error al eliminar la meta: " + response.status + " " + response.statusText);
-        //     }
-        // } catch (error) {
-        //     console.error(error);
-        //     setOpenSnackbar(true);
-        //     setSnackbarSeverity("error");
-        //     setSnackbarMessage("Error al eliminar la meta: " + error.message);
-        // }
+        try {
+            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(inputValues),
+            });
+            if (response.status === 204) {
+                setOpenSnackbar(true);
+                setSnackbarSeverity("success");
+                setSnackbarMessage("Registro añadido correctamente");
+                handleSave();
+            } else {
+                setOpenSnackbar(true);
+                setSnackbarSeverity("error");
+                setSnackbarMessage("Error al añadir el registro: " + response.status + " " + response.statusText);
+            }
+        } catch (error) {
+            console.error(error);
+            setOpenSnackbar(true);
+            setSnackbarSeverity("error");
+            setSnackbarMessage("Error al añadir el registro: " + error.message);
+        }
     };
 
     return (
         <Modal closeAfterTransition open={open} onClose={handleClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
             <Fade in={open}>
                 <Box sx={style}>
+                    <SnackbarAlert open={openSnackbar} onClose={handleCloseSnackbar} severity={snackbarSeverity} message={snackbarMessage} />
                     <Typography id="modal-modal-title" variant="h6" color="primary.main" component="h2">
                         AÑADIR REGISTRO
                     </Typography>
                     <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexWrap: "wrap", gap: "15px", p: "8px", justifyContent: "center" }}>
                         {inputs.map((input) => (
-                            <TextField onChange={handleInputChange} key={input.name} label={input.label} type={input.type} name={input.name} required={input.required} />
+                            <TextField
+                                autoComplete="off"
+                                onChange={handleInputChange}
+                                key={input.name}
+                                label={input.label}
+                                type={input.type}
+                                name={input.name}
+                                required={input.required}
+                            />
                         ))}
                         <Button variant="contained" color="primary" type="submit">
                             Guardar

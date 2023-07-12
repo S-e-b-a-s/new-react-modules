@@ -14,11 +14,11 @@ import {
     GridRowModes,
     GridRowEditStopReasons,
 } from "@mui/x-data-grid";
-import AddCircleOutlineOutlinedIcon from "@mui/icons-material/AddCircleOutlineOutlined";
 import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ModalAddMetas from "./ModalAddMetas";
+import PropTypes from "prop-types";
 
 const AnalisisMetas = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -27,27 +27,32 @@ const AnalisisMetas = () => {
     const [coordinator, setCoordinator] = useState("");
     const [rows, setRows] = useState([]);
     const [rowModesModel, setRowModesModel] = useState({});
+    const [isLoading, setIsLoading] = useState(true); // Add a loading state
 
     const [open, setOpen] = useState(false);
-    const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
-    // const fetchData = async () => {
-    //     const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
-    //     const data = await response.text();
-    //     console.log(data);
-    //     if (data === "No ha accedido al sistema") {
-    //         window.location.href = "https://intranet.cyc-bpo.com/";
-    //     } else {
-    //         setCoordinator(data);
-    //     }
-    // };
-    // fetchData();
+    const fetchData = async () => {
+        const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
+        const data = await response.text();
+        console.log(data);
+
+        if (data == "No ha accedido al sistema.") {
+            window.location.href = "https://intranet.cyc-bpo.com/";
+            return;
+        } else if (data == "Acceso permitido.") {
+            setIsLoading(true);
+        } else {
+            setCoordinator(data);
+            setIsLoading(true);
+        }
+    };
+    fetchData();
 
     const handleSave = async () => {
         try {
-            //const encodedCoordinator = encodeURIComponent("FAVIAN SIERRA");
-            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/`, {
+            const encodedCoordinator = encodeURIComponent(coordinator);
+            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${encodedCoordinator}`, {
                 method: "GET",
             });
 
@@ -280,11 +285,17 @@ const AnalisisMetas = () => {
         }
     }, []);
 
+    CustomToolbar.propTypes = {
+        setRows: PropTypes.func.isRequired,
+        setRowModesModel: PropTypes.func.isRequired,
+    };
+
     function CustomToolbar(props) {
-        const { setRows, setRowModesModel } = props;
+        // const { setRows, setRowModesModel } = props;
 
         const handleClick = () => {
             setOpen(true);
+            // Old way to add a new row
             // const cedula = Math.floor(Math.random() * 100000) + 1;
             // setRows((oldRows) => [
             //     ...oldRows,
@@ -303,9 +314,9 @@ const AnalisisMetas = () => {
                 <GridToolbarFilterButton />
                 <GridToolbarDensitySelector />
                 <GridToolbarExport />
-                <Button color="primary" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={handleClick}>
+                {/* <Button color="primary" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={handleClick}>
                     Añadir registro
-                </Button>
+                </Button> */}
                 <Box sx={{ textAlign: "end", flex: "1" }}>
                     <GridToolbarQuickFilter />
                 </Box>
@@ -324,43 +335,49 @@ const AnalisisMetas = () => {
     };
 
     return (
-        <Container
-            sx={{
-                height: "100vh",
-                width: "100%",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                flexDirection: "column",
-            }}
-        >
-            <ModalAddMetas handleClose={handleClose} open={open} />
-            <Typography sx={{ textAlign: "center", pb: "15px", color: "primary.main", fontWeight: "500" }} variant={"h4"}>
-                Análisis de Metas
-            </Typography>
-            <DataGrid
-                rows={rows}
-                editMode="row"
-                columns={columns}
-                sx={{ maxHeight: "600px" }}
-                rowModesModel={rowModesModel}
-                onRowEditStop={handleRowEditStop}
-                processRowUpdate={processRowUpdate}
-                onRowModesModelChange={handleRowModesModelChange}
-                onProcessRowUpdateError={handleProcessRowUpdateError}
-                slots={{
-                    toolbar: CustomToolbar,
-                }}
-                slotProps={{
-                    toolbar: {
-                        setRows,
-                        setRowModesModel,
-                    },
-                }}
-                getRowId={(row) => row.cedula}
-            />
-            <SnackbarAlert open={openSnackbar} onClose={handleCloseSnackbar} severity={snackbarSeverity} message={snackbarMessage} />
-        </Container>
+        <>
+            {isLoading ? (
+                <Container
+                    sx={{
+                        height: "100vh",
+                        width: "100%",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        flexDirection: "column",
+                    }}
+                >
+                    <ModalAddMetas handleClose={handleClose} open={open} handleSave={handleSave} />
+                    <Typography sx={{ textAlign: "center", pb: "15px", color: "primary.main", fontWeight: "500" }} variant={"h4"}>
+                        Análisis de Metas
+                    </Typography>
+                    <DataGrid
+                        rows={rows}
+                        editMode="row"
+                        columns={columns}
+                        sx={{ maxHeight: "600px" }}
+                        rowModesModel={rowModesModel}
+                        onRowEditStop={handleRowEditStop}
+                        processRowUpdate={processRowUpdate}
+                        onRowModesModelChange={handleRowModesModelChange}
+                        onProcessRowUpdateError={handleProcessRowUpdateError}
+                        slots={{
+                            toolbar: CustomToolbar,
+                        }}
+                        slotProps={{
+                            toolbar: {
+                                setRows,
+                                setRowModesModel,
+                            },
+                        }}
+                        getRowId={(row) => row.cedula}
+                    />
+                    <SnackbarAlert open={openSnackbar} onClose={handleCloseSnackbar} severity={snackbarSeverity} message={snackbarMessage} />
+                </Container>
+            ) : (
+                (window.location.href = "https://intranet.cyc-bpo.com/")
+            )}
+        </>
     );
 };
 export default AnalisisMetas;
