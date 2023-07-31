@@ -72,7 +72,7 @@ const SubirExcelMetas = () => {
             formData.append("file", selectedFile);
 
             try {
-                const response = await fetch("https://insights-api-dev.cyc-bpo.com/goals/", {
+                const response = await fetch("https://insights-api.cyc-bpo.com/goals/", {
                     method: "POST",
                     body: formData,
                 });

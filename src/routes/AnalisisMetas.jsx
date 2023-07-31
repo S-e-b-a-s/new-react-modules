@@ -1,4 +1,4 @@
-import { Container, Typography, Button, Box } from "@mui/material";
+import { Container, Typography, Box } from "@mui/material";
 import SnackbarAlert from "../components/SnackbarAlert";
 import { useState, useEffect, useCallback } from "react";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
@@ -310,10 +310,16 @@ const AnalisisMetas = () => {
 
         return (
             <GridToolbarContainer>
-                <GridToolbarColumnsButton />
+                <GridToolbarColumnsButton /> 
                 <GridToolbarFilterButton />
                 <GridToolbarDensitySelector />
-                <GridToolbarExport />
+                <GridToolbarExport
+                    csvOptions={{
+                        fileName: "Metas",
+                        delimiter: ";",
+                        utf8WithBom: true,
+                    }}
+                />
                 {/* <Button color="primary" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={handleClick}>
                     Añadir registro
                 </Button> */}
@@ -356,6 +362,11 @@ const AnalisisMetas = () => {
                         editMode="row"
                         columns={columns}
                         sx={{ maxHeight: "600px" }}
+                        csvOptions={{
+                            fileName: "customerDataBase",
+                            delimiter: ";",
+                            utf8WithBom: true,
+                        }}
                         rowModesModel={rowModesModel}
                         onRowEditStop={handleRowEditStop}
                         processRowUpdate={processRowUpdate}

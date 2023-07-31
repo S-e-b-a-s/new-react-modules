@@ -8,6 +8,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import SubirExcelMetas from "./routes/SubirExcelMetas";
 import ErrorPage from "./routes/ErrorPage";
 import AnalisisMetas from "./routes/AnalisisMetas";
+
 const theme = createTheme({
     typography: {
         fontFamily: [
@@ -64,7 +65,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
         <ThemeProvider theme={theme}>
             <CssBaseline />
-            <SubirExcelMetas />
+            <AnalisisMetas/>
         </ThemeProvider>
     </React.StrictMode>
 );
