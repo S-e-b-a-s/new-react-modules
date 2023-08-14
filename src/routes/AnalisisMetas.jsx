@@ -19,6 +19,9 @@ import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ModalAddMetas from "./ModalAddMetas";
 import PropTypes from "prop-types";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
 
 const AnalisisMetas = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -28,6 +31,7 @@ const AnalisisMetas = () => {
     const [rows, setRows] = useState([]);
     const [rowModesModel, setRowModesModel] = useState({});
     const [isLoading, setIsLoading] = useState(true); // Add a loading state
+    const [yearsArray, setYearsArray] = useState([]); // Add a loading state
 
     const [open, setOpen] = useState(false);
     const handleClose = () => setOpen(false);
@@ -52,7 +56,7 @@ const AnalisisMetas = () => {
     const handleSave = async () => {
         try {
             const encodedCoordinator = encodeURIComponent(coordinator);
-            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${encodedCoordinator}`, {
+            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/${encodedCoordinator}`, {
                 method: "GET",
             });
 
@@ -127,7 +131,7 @@ const AnalisisMetas = () => {
 
     const handleDeleteClick = async (cedula) => {
         try {
-            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${cedula}`, {
+            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/${cedula}`, {
                 method: "DELETE",
             });
             if (response.status === 204) {
@@ -260,7 +264,7 @@ const AnalisisMetas = () => {
 
         // Make the HTTP request to save in the backend
         try {
-            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${newRow.cedula}/`, {
+            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/${newRow.cedula}/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -310,7 +314,7 @@ const AnalisisMetas = () => {
 
         return (
             <GridToolbarContainer>
-                <GridToolbarColumnsButton /> 
+                <GridToolbarColumnsButton />
                 <GridToolbarFilterButton />
                 <GridToolbarDensitySelector />
                 <GridToolbarExport
@@ -340,6 +344,39 @@ const AnalisisMetas = () => {
         }
     };
 
+    const months = [
+        { value: "ENERO", label: "ENERO" },
+        { value: "FEBRERO", label: "FEBRERO" },
+        { value: "MARZO", label: "MARZO" },
+        { value: "ABRIL", label: "ABRIL" },
+        { value: "MAYO", label: "MAYO" },
+        { value: "JUNIO", label: "JUNIO" },
+        { value: "JULIO", label: "JULIO" },
+        { value: "AGOSTO", label: "AGOSTO" },
+        { value: "SEPTIEMBRE", label: "SEPTIEMBRE" },
+        { value: "OCTUBRE", label: "OCTUBRE" },
+        { value: "NOVIEMBRE", label: "NOVIEMBRE" },
+        { value: "DICIEMBRE", label: "DICIEMBRE" },
+    ];
+
+    useEffect(() => {
+        const YearSelect = () => {
+            const currentYear = new Date().getFullYear();
+            const years = [];
+            for (let year = currentYear; year <= 2023; year++) {
+                years.push({ value: year, label: year });
+            }
+            setYearsArray(years);
+        };
+
+        YearSelect();
+        console.log(yearsArray);
+    }, []);
+
+    const handleFilter = () => {
+        
+    };
+
     return (
         <>
             {isLoading ? (
@@ -357,6 +394,25 @@ const AnalisisMetas = () => {
                     <Typography sx={{ textAlign: "center", pb: "15px", color: "primary.main", fontWeight: "500" }} variant={"h4"}>
                         Análisis de Metas
                     </Typography>
+                    <Box component="form" sx={{ display: "flex", gap: "2rem", p: "1rem" }} onSubmit={() => handleFilter()}>
+                        <TextField sx={{ width: "9rem" }} size="small" variant="filled" select label="Mes">
+                            {months.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                        <TextField sx={{ width: "9rem" }} size="small" variant="filled" select label="Año">
+                            {yearsArray.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                    {option.label}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                        <Button variant="outlined" size="small">
+                            Filtrar
+                        </Button>
+                    </Box>
                     <DataGrid
                         rows={rows}
                         editMode="row"

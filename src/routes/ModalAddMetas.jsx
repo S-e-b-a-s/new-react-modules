@@ -62,7 +62,7 @@ const ModalAddMetas = ({ handleClose, open, handleSave }) => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         try {
-            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/`, {
+            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
