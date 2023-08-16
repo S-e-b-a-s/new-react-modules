@@ -1,6 +1,6 @@
 import { Container, Typography, Box } from "@mui/material";
 import SnackbarAlert from "../components/SnackbarAlert";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import {
     DataGrid,
@@ -35,23 +35,25 @@ const AnalisisMetas = () => {
 
     const [open, setOpen] = useState(false);
     const handleClose = () => setOpen(false);
+    const monthRef = useRef();
+    const yearRef = useRef();
 
-    const fetchData = async () => {
-        const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
-        const data = await response.text();
-        console.log(data);
+    // const fetchData = async () => {
+    //     const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
+    //     const data = await response.text();
+    //     console.log(data);
 
-        if (data == "No ha accedido al sistema.") {
-            window.location.href = "https://intranet.cyc-bpo.com/";
-            return;
-        } else if (data == "Acceso permitido.") {
-            setIsLoading(true);
-        } else {
-            setCoordinator(data);
-            setIsLoading(true);
-        }
-    };
-    fetchData();
+    //     if (data == "No ha accedido al sistema.") {
+    //         window.location.href = "https://intranet.cyc-bpo.com/";
+    //         return;
+    //     } else if (data == "Acceso permitido.") {
+    //         setIsLoading(true);
+    //     } else {
+    //         setCoordinator(data);
+    //         setIsLoading(true);
+    //     }
+    // };
+    // fetchData();
 
     const handleSave = async () => {
         try {
@@ -163,6 +165,48 @@ const AnalisisMetas = () => {
         { field: "last_update", headerName: "Fecha de modificación", width: 155 },
         { field: "accepted", headerName: "Aprobación Meta", width: 125 },
         { field: "accepted_execution", headerName: "Aprobación Ejecución", width: 150 },
+        {
+            field: "goal_date",
+            headerName: "Fecha de la meta",
+            width: 150,
+            sortComparator: (v1, v2) => {
+                // Extraer el mes y el año de los valores
+                const [mes1, año1] = v1.split("-");
+                const [mes2, año2] = v2.split("-");
+                // Crear un objeto con los nombres de los meses en español y sus números correspondientes
+                const meses = {
+                    ENERO: 1,
+                    FEBRERO: 2,
+                    MARZO: 3,
+                    ABRIL: 4,
+                    MAYO: 5,
+                    JUNIO: 6,
+                    JULIO: 7,
+                    AGOSTO: 8,
+                    SEPTIEMBRE: 9,
+                    OCTUBRE: 10,
+                    NOVIEMBRE: 11,
+                    DICIEMBRE: 12,
+                };
+                // Convertir los meses a números
+                const num1 = meses[mes1];
+                const num2 = meses[mes2];
+                // Comparar los años primero, y si son iguales, comparar los meses
+                if (año1 < año2) {
+                    return -1;
+                } else if (año1 > año2) {
+                    return 1;
+                } else {
+                    if (num1 < num2) {
+                        return -1;
+                    } else if (num1 > num2) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
+            },
+        },
         {
             field: "actions",
             type: "actions",
@@ -370,11 +414,81 @@ const AnalisisMetas = () => {
         };
 
         YearSelect();
-        console.log(yearsArray);
     }, []);
 
-    const handleFilter = () => {
-        
+    const handleFilter = async (event) => {
+        event.preventDefault();
+        console.log("Selected Month:", monthRef.current.value);
+        console.log("Selected Year:", yearRef.current.value);
+
+        try {
+            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/`, {
+                method: "GET",
+            });
+
+            if (!response.ok) {
+                if (response.status === 500) {
+                    console.error("Lo sentimos, se ha producido un error inesperado.");
+                    setOpenSnackbar(true);
+                    setSnackbarSeverity("error");
+                    setSnackbarMessage("Lo sentimos, se ha producido un error inesperado");
+                    throw new Error(response.statusText);
+                } else if (response.status === 400) {
+                    const data = await response.json();
+                    console.error("Lo sentimos, se ha producido un error inesperado.");
+                    setOpenSnackbar(true);
+                    setSnackbarSeverity("error");
+                    setSnackbarMessage(data.message);
+                    throw new Error(response.statusText);
+                }
+
+                const data = await response.json();
+                console.error("Message: " + data.message + " Asesor: " + data.Asesor + " Error: " + data.error);
+                setOpenSnackbar(true);
+                setSnackbarSeverity("error");
+                setSnackbarMessage("Message: " + data.message + " Asesor: " + data.Asesor + " Error: " + data.error);
+                throw new Error(response.statusText);
+            }
+
+            if (response.status === 200) {
+                const data = await response.json();
+                const modifiedData = data.map((row) => {
+                    if (row.quantity > 999) {
+                        const formatter = new Intl.NumberFormat("es-CO", {
+                            style: "currency",
+                            currency: "COP",
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                        });
+                        const value = row.quantity;
+                        const formattedValue = formatter.format(value);
+                        row.quantity = formattedValue;
+                    } else if (row.quantity < 1) {
+                        row.quantity = Math.round(row.quantity * 100) + "%";
+                    }
+                    return {
+                        ...row,
+                        last_update: row.last_update.substring(0, 10),
+                        accepted: row.accepted == 0 ? "Rechazada" : row.accepted == 1 ? "Aceptada" : "En espera",
+                        clean_desk: row.clean_desk === "" ? "En Espera" : row.clean_desk,
+                        quality: row.quality === "" ? "En Espera" : row.quality,
+                        result: row.result === "" ? "En Espera" : row.result,
+                        total: row.total === "" ? "En Espera" : row.total,
+                        accepted_execution:
+                            row.total == "" && row.accepted_execution == null
+                                ? ""
+                                : row.accepted_execution == 0
+                                ? "Rechazada"
+                                : row.accepted_execution == 1
+                                ? "Aceptada"
+                                : "En espera",
+                    };
+                });
+                setRows(modifiedData);
+            }
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     return (
@@ -394,22 +508,22 @@ const AnalisisMetas = () => {
                     <Typography sx={{ textAlign: "center", pb: "15px", color: "primary.main", fontWeight: "500" }} variant={"h4"}>
                         Análisis de Metas
                     </Typography>
-                    <Box component="form" sx={{ display: "flex", gap: "2rem", p: "1rem" }} onSubmit={() => handleFilter()}>
-                        <TextField sx={{ width: "9rem" }} size="small" variant="filled" select label="Mes">
+                    <Box component="form" sx={{ display: "flex", gap: "2rem", p: "1rem" }} onSubmit={handleFilter}>
+                        <TextField required defaultValue="" sx={{ width: "9rem" }} size="small" variant="filled" select label="Mes" inputRef={monthRef}>
                             {months.map((option) => (
                                 <MenuItem key={option.value} value={option.value}>
                                     {option.label}
                                 </MenuItem>
                             ))}
                         </TextField>
-                        <TextField sx={{ width: "9rem" }} size="small" variant="filled" select label="Año">
+                        <TextField required defaultValue="" sx={{ width: "9rem" }} size="small" variant="filled" select label="Año" inputRef={yearRef}>
                             {yearsArray.map((option) => (
                                 <MenuItem key={option.value} value={option.value}>
                                     {option.label}
                                 </MenuItem>
                             ))}
                         </TextField>
-                        <Button variant="outlined" size="small">
+                        <Button variant="outlined" size="small" type="submit">
                             Filtrar
                         </Button>
                     </Box>
