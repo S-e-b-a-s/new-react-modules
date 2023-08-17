@@ -18,7 +18,6 @@ import SaveOutlinedIcon from "@mui/icons-material/SaveOutlined";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ModalAddMetas from "./ModalAddMetas";
-import PropTypes from "prop-types";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
@@ -38,27 +37,27 @@ const AnalisisMetas = () => {
     const monthRef = useRef();
     const yearRef = useRef();
 
-    // const fetchData = async () => {
-    //     const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
-    //     const data = await response.text();
-    //     console.log(data);
+    const fetchData = async () => {
+        const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
+        const data = await response.text();
+        console.log(data);
 
-    //     if (data == "No ha accedido al sistema.") {
-    //         window.location.href = "https://intranet.cyc-bpo.com/";
-    //         return;
-    //     } else if (data == "Acceso permitido.") {
-    //         setIsLoading(true);
-    //     } else {
-    //         setCoordinator(data);
-    //         setIsLoading(true);
-    //     }
-    // };
-    // fetchData();
+        if (data == "No ha accedido al sistema.") {
+            window.location.href = "https://intranet.cyc-bpo.com/";
+            return;
+        } else if (data == "Acceso permitido.") {
+            setIsLoading(true);
+        } else {
+            setCoordinator(data);
+            setIsLoading(true);
+        }
+    };
+    fetchData();
 
     const handleSave = async () => {
         try {
             const encodedCoordinator = encodeURIComponent(coordinator);
-            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/${encodedCoordinator}`, {
+            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${encodedCoordinator}`, {
                 method: "GET",
             });
 
@@ -133,7 +132,7 @@ const AnalisisMetas = () => {
 
     const handleDeleteClick = async (cedula) => {
         try {
-            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/${cedula}`, {
+            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${cedula}`, {
                 method: "DELETE",
             });
             if (response.status === 204) {
@@ -273,11 +272,6 @@ const AnalisisMetas = () => {
     }, []);
 
     const processRowUpdate = useCallback(async (newRow) => {
-        // const updatedRow = { ...newRow, isNew: false };
-        // setRows(rows.map((row) => (row.id === newRow.id ? updatedRow : row)));
-        // console.log(updatedRow);
-        // return updatedRow;
-        // Format the quantity value
         if (newRow.quantity.includes("%")) {
             newRow.quantity = parseFloat(newRow.quantity.replace("%", "")) / 100;
         } else {
@@ -308,7 +302,7 @@ const AnalisisMetas = () => {
 
         // Make the HTTP request to save in the backend
         try {
-            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/${newRow.cedula}/`, {
+            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${newRow.cedula}/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -333,29 +327,7 @@ const AnalisisMetas = () => {
         }
     }, []);
 
-    CustomToolbar.propTypes = {
-        setRows: PropTypes.func.isRequired,
-        setRowModesModel: PropTypes.func.isRequired,
-    };
-
-    function CustomToolbar(props) {
-        // const { setRows, setRowModesModel } = props;
-
-        const handleClick = () => {
-            setOpen(true);
-            // Old way to add a new row
-            // const cedula = Math.floor(Math.random() * 100000) + 1;
-            // setRows((oldRows) => [
-            //     ...oldRows,
-            //     { cedula: cedula, quantity: "", clean_desk: "", quality: "", result: "", total: "", last_update: "", accepted: "", accepted_execution: "", isNew: true },
-            // ]);
-
-            // setRowModesModel((oldModel) => ({
-            //     ...oldModel,
-            //     [cedula]: { mode: GridRowModes.Edit, fieldToFocus: "clean_desk" },
-            // }));
-        };
-
+    function CustomToolbar() {
         return (
             <GridToolbarContainer>
                 <GridToolbarColumnsButton />
@@ -368,9 +340,6 @@ const AnalisisMetas = () => {
                         utf8WithBom: true,
                     }}
                 />
-                {/* <Button color="primary" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={handleClick}>
-                    Añadir registro
-                </Button> */}
                 <Box sx={{ textAlign: "end", flex: "1" }}>
                     <GridToolbarQuickFilter />
                 </Box>
@@ -422,7 +391,7 @@ const AnalisisMetas = () => {
         console.log("Selected Year:", yearRef.current.value);
 
         try {
-            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/`, {
+            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/`, {
                 method: "GET",
             });
 
@@ -508,7 +477,7 @@ const AnalisisMetas = () => {
                     <Typography sx={{ textAlign: "center", pb: "15px", color: "primary.main", fontWeight: "500" }} variant={"h4"}>
                         Análisis de Metas
                     </Typography>
-                    <Box component="form" sx={{ display: "flex", gap: "2rem", p: "1rem" }} onSubmit={handleFilter}>
+                    {/* <Box component="form" sx={{ display: "flex", gap: "2rem", p: "1rem" }} onSubmit={handleFilter}>
                         <TextField required defaultValue="" sx={{ width: "9rem" }} size="small" variant="filled" select label="Mes" inputRef={monthRef}>
                             {months.map((option) => (
                                 <MenuItem key={option.value} value={option.value}>
@@ -526,7 +495,7 @@ const AnalisisMetas = () => {
                         <Button variant="outlined" size="small" type="submit">
                             Filtrar
                         </Button>
-                    </Box>
+                    </Box> */}
                     <DataGrid
                         rows={rows}
                         editMode="row"
