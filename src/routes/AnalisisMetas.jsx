@@ -57,7 +57,7 @@ const AnalisisMetas = () => {
     const handleSave = async () => {
         try {
             const encodedCoordinator = encodeURIComponent(coordinator);
-            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${encodedCoordinator}`, {
+            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/?coordinator=${encodedCoordinator}`, {
                 method: "GET",
             });
 
