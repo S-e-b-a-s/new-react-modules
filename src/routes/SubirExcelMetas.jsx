@@ -22,19 +22,22 @@ const SubirExcelMetas = () => {
     const [snackbarMessage, setSnackbarMessage] = useState("");
     const [loading, setLoading] = useState(false);
     const [isLoading, setIsLoading] = useState(true); // Add a loading state
+    const [cedula, setCedula] = useState();
 
     const fetchData = async () => {
         const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
-        const data = await response.text();
+        const data = await response.json();
         console.log(data);
-
-        if (data == "Acceso permitido.") {
-            setIsLoading(true);
-        } else if (data == "No ha accedido al sistema.") {
+        if (data.status === "error") {
             window.location.href = "https://intranet.cyc-bpo.com/";
             return;
-        } else {
+        } else if (data.status === "success" && data.message === "Acceso permitido.") {
             setIsLoading(true);
+            setCedula(data.cedula);
+        } else if (data.status === "success" && data.coordinator) {
+            setCoordinator(data.coordinator);
+            setIsLoading(true);
+            setCedula(data.cedula);
         }
     };
     fetchData();
@@ -70,7 +73,7 @@ const SubirExcelMetas = () => {
         if (selectedFile) {
             const formData = new FormData();
             formData.append("file", selectedFile);
-
+            formData.append("cedula", cedula);
             try {
                 const response = await fetch("https://insights-api-dev.cyc-bpo.com/goals/", {
                     method: "POST",

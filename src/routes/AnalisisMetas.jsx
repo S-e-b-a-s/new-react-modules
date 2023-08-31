@@ -31,33 +31,54 @@ const AnalisisMetas = () => {
     const [rowModesModel, setRowModesModel] = useState({});
     const [isLoading, setIsLoading] = useState(true); // Add a loading state
     const [yearsArray, setYearsArray] = useState([]); // Add a loading state
-
+    const [cedula, setCedula] = useState("");
     const [open, setOpen] = useState(false);
     const handleClose = () => setOpen(false);
     const monthRef = useRef();
     const yearRef = useRef();
 
+    // const fetchData = async () => {
+    //     const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
+    //     const data = await response.text();
+
+    //     if (data == "No ha accedido al sistema.") {
+    //         window.location.href = "https://intranet.cyc-bpo.com/";
+    //         return;
+    //     } else if (data == "Acceso permitido.") {
+    //         setIsLoading(true);
+    //     } else {
+    //         setCoordinator(data);
+    //         setIsLoading(true);
+    //     }b
+    // };
+    // fetchData();
+
     const fetchData = async () => {
         const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
-        const data = await response.text();
+        const data = await response.json();
         console.log(data);
-
-        if (data == "No ha accedido al sistema.") {
+        if (data.status === "error") {
             window.location.href = "https://intranet.cyc-bpo.com/";
             return;
-        } else if (data == "Acceso permitido.") {
+        } else if (data.status === "success" && data.message === "Acceso permitido.") {
             setIsLoading(true);
-        } else {
-            setCoordinator(data);
+            console.log(data.cedula);
+            setCedula(data.cedula);
+        } else if (data.status === "success" && data.coordinator) {
+            setCoordinator(data.coordinator);
             setIsLoading(true);
+            setCedula(data.cedula);
         }
     };
-    fetchData();
 
     const handleSave = async () => {
         try {
+            await fetchData();
             const encodedCoordinator = encodeURIComponent(coordinator);
-            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/?coordinator=${encodedCoordinator}`, {
+            console.log(encodedCoordinator);
+            console.log(cedula);
+            // const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/?coordinator=${encodedCoordinator}`, {
+            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/?coordinator=${encodedCoordinator}&cedula=${cedula}`, {
                 method: "GET",
             });
 
@@ -130,13 +151,14 @@ const AnalisisMetas = () => {
         handleSave();
     }, []);
 
-    const handleDeleteClick = async (cedula) => {
+    const handleDeleteClick = async (register_cedula) => {
         try {
-            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${cedula}`, {
+            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/${register_cedula}`, {
                 method: "DELETE",
+                body: JSON.stringify({ cedula: cedula }),
             });
             if (response.status === 204) {
-                setRows(rows.filter((row) => row.cedula !== cedula));
+                setRows(rows.filter((row) => row.cedula !== register_cedula));
                 setOpenSnackbar(true);
                 setSnackbarSeverity("success");
                 setSnackbarMessage("Registro eliminado correctamente");
@@ -301,13 +323,14 @@ const AnalisisMetas = () => {
         newRow.result = mapValues(newRow.result);
 
         // Make the HTTP request to save in the backend
+        const newRowWithCedula = { ...newRow, cedula: cedula };
         try {
-            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/${newRow.cedula}/`, {
+            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/${newRow.cedula}/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(newRow),
+                body: JSON.stringify(newRowWithCedula),
             });
 
             if (!response.ok) {
@@ -387,11 +410,9 @@ const AnalisisMetas = () => {
 
     const handleFilter = async (event) => {
         event.preventDefault();
-        console.log("Selected Month:", monthRef.current.value);
-        console.log("Selected Year:", yearRef.current.value);
 
         try {
-            const response = await fetch(`https://insights-api.cyc-bpo.com/goals/`, {
+            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/?month=${monthRef.current.value}-${yearRef.current.value}&cedula=${cedula}`, {
                 method: "GET",
             });
 
@@ -421,6 +442,7 @@ const AnalisisMetas = () => {
 
             if (response.status === 200) {
                 const data = await response.json();
+                /* just wait he is going to sleep in the lunch time I think, after that he will be okay */
                 const modifiedData = data.map((row) => {
                     if (row.quantity > 999) {
                         const formatter = new Intl.NumberFormat("es-CO", {
@@ -437,7 +459,7 @@ const AnalisisMetas = () => {
                     }
                     return {
                         ...row,
-                        last_update: row.last_update.substring(0, 10),
+                        history_date: row.history_date.substring(0, 10),
                         accepted: row.accepted == 0 ? "Rechazada" : row.accepted == 1 ? "Aceptada" : "En espera",
                         clean_desk: row.clean_desk === "" ? "En Espera" : row.clean_desk,
                         quality: row.quality === "" ? "En Espera" : row.quality,
@@ -477,7 +499,7 @@ const AnalisisMetas = () => {
                     <Typography sx={{ textAlign: "center", pb: "15px", color: "primary.main", fontWeight: "500" }} variant={"h4"}>
                         Análisis de Metas
                     </Typography>
-                    {/* <Box component="form" sx={{ display: "flex", gap: "2rem", p: "1rem" }} onSubmit={handleFilter}>
+                    <Box component="form" sx={{ display: "flex", gap: "2rem", p: "1rem" }} onSubmit={handleFilter}>
                         <TextField required defaultValue="" sx={{ width: "9rem" }} size="small" variant="filled" select label="Mes" inputRef={monthRef}>
                             {months.map((option) => (
                                 <MenuItem key={option.value} value={option.value}>
@@ -495,7 +517,7 @@ const AnalisisMetas = () => {
                         <Button variant="outlined" size="small" type="submit">
                             Filtrar
                         </Button>
-                    </Box> */}
+                    </Box>
                     <DataGrid
                         rows={rows}
                         editMode="row"
