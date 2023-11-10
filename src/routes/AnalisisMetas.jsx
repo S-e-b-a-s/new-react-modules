@@ -31,11 +31,12 @@ const AnalisisMetas = () => {
     const [rowModesModel, setRowModesModel] = useState({});
     const [isLoading, setIsLoading] = useState(true); // Add a loading state
     const [yearsArray, setYearsArray] = useState([]); // Add a loading state
-    const [cedula, setCedula] = useState("");
     const [open, setOpen] = useState(false);
+    const [link, setLink] = useState();
     const handleClose = () => setOpen(false);
     const monthRef = useRef();
     const yearRef = useRef();
+    const columnRef = useRef();
 
     // const fetchData = async () => {
     //     const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
@@ -49,36 +50,36 @@ const AnalisisMetas = () => {
     //     } else {
     //         setCoordinator(data);
     //         setIsLoading(true);
-    //     }b
+    //     }
     // };
     // fetchData();
 
-    const fetchData = async () => {
-        const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
-        const data = await response.json();
-        console.log(data);
-        if (data.status === "error") {
-            window.location.href = "https://intranet.cyc-bpo.com/";
-            return;
-        } else if (data.status === "success" && data.message === "Acceso permitido.") {
-            setIsLoading(true);
-            console.log(data.cedula);
-            setCedula(data.cedula);
-        } else if (data.status === "success" && data.coordinator) {
-            setCoordinator(data.coordinator);
-            setIsLoading(true);
-            setCedula(data.cedula);
-        }
-    };
+    // const fetchData = async () => {
+    //     try {
+    //         const response = await fetch("https://intranet.cyc-bpo.com/getSessionValue.php");
+    //         const data = await response.json();
+    //         console.log("data:", data);
+    //         if (data.status === "error") {
+    //             window.location.href = "https://intranet.cyc-bpo.com/";
+    //             return;
+    //         } else if (data.status === "success" && data.message === "Acceso permitido.") {
+    //             setIsLoading(true);
+    //             setLink("https://insights-api-dev.cyc-bpo.com/goals/");
+    //         } else if (data.status === "success" && data.coordinator) {
+    //             setCoordinator(data.coordinator);
+    //             const encodedCoordinator = encodeURIComponent(data.coordinator);
+    //             setIsLoading(true);
+    //             setLink(`https://insights-api-dev.cyc-bpo.com/goals/?coordinator=${encodedCoordinator}/`);
+    //         }
+    //     } catch (error) {
+    //         console.error(error);
+    //     }
+    // };
 
     const handleSave = async () => {
         try {
-            await fetchData();
-            const encodedCoordinator = encodeURIComponent(coordinator);
-            console.log(encodedCoordinator);
-            console.log(cedula);
-            // const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/?coordinator=${encodedCoordinator}`, {
-            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/?coordinator=${encodedCoordinator}&cedula=${cedula}`, {
+            // await fetchData();
+            const response = await fetch("https://insights-api-dev.cyc-bpo.com/goals/", {
                 method: "GET",
             });
 
@@ -149,11 +150,11 @@ const AnalisisMetas = () => {
 
     useEffect(() => {
         handleSave();
-    }, []);
+    }, []); // Add cedula and coordinator as dependencies to useEffect
 
     const handleDeleteClick = async (register_cedula) => {
         try {
-            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/${register_cedula}`, {
+            const response = await fetch(`https://insights-api-dev-dev.cyc-bpo.com/goals/${register_cedula}`, {
                 method: "DELETE",
                 body: JSON.stringify({ cedula: cedula }),
             });
@@ -176,8 +177,122 @@ const AnalisisMetas = () => {
         }
     };
 
-    const columns = [
-        { field: "cedula", headerName: "Cedula", width: 100 },
+    const handleChangeColumns = (columnType) => {
+        if (columnType === "goal") {
+            setColumns(goalColumns);
+        } else {
+            setColumns(executionColumns);
+        }
+    };
+
+    const constColumns = [
+        { field: "cedula", headerName: "Cédula", width: 100 },
+        { field: "name", headerName: "Nombre", width: 100 },
+        { field: "last_update", headerName: "Fecha de modificacion", width: 100 },
+    ];
+
+    const goalColumns = [
+        { field: "quantity", headerName: "Meta", width: 140, editable: true },
+        { field: "criteria", headerName: "Variable a Medir", width: 140, editable: true },
+        { field: "accepted", headerName: "Aprobación Meta", width: 125 },
+        { field: "accepted_at", headerName: "Fecha de Aprobación de Meta", width: 125 },
+        {
+            field: "goal_date",
+            headerName: "Fecha de la meta",
+            width: 150,
+            sortComparator: (v1, v2) => {
+                // Extraer el mes y el año de los valores
+                const [mes1, año1] = v1.split("-");
+                const [mes2, año2] = v2.split("-");
+                // Crear un objeto con los nombres de los meses en español y sus números correspondientes
+                const meses = {
+                    ENERO: 1,
+                    FEBRERO: 2,
+                    MARZO: 3,
+                    ABRIL: 4,
+                    MAYO: 5,
+                    JUNIO: 6,
+                    JULIO: 7,
+                    AGOSTO: 8,
+                    SEPTIEMBRE: 9,
+                    OCTUBRE: 10,
+                    NOVIEMBRE: 11,
+                    DICIEMBRE: 12,
+                };
+                // Convertir los meses a números
+                const num1 = meses[mes1];
+                const num2 = meses[mes2];
+                // Comparar los años primero, y si son iguales, comparar los meses
+                if (año1 < año2) {
+                    return -1;
+                } else if (año1 > año2) {
+                    return 1;
+                } else {
+                    if (num1 < num2) {
+                        return -1;
+                    } else if (num1 > num2) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
+            },
+        },
+    ];
+
+    const executionColumns = [
+        { field: "clean_desk", headerName: "Clean Desk", width: 80, editable: true },
+        { field: "quality", headerName: "Calidad", width: 80, editable: true },
+        { field: "result", headerName: "Resultado", width: 80, editable: true },
+        { field: "total", headerName: "Total", width: 80, editable: true },
+        { field: "accepted_execution", headerName: "Aprobación Ejecución", width: 150 },
+        { field: "accepted_execution_at", headerName: "Fecha de Aprobación de Ejecución", width: 150 },
+        {
+            field: "execution_date",
+            headerName: "Fecha de la ejecución de la meta",
+            width: 150,
+            sortComparator: (v1, v2) => {
+                // Extraer el mes y el año de los valores
+                const [mes1, año1] = v1.split("-");
+                const [mes2, año2] = v2.split("-");
+                // Crear un objeto con los nombres de los meses en español y sus números correspondientes
+                const meses = {
+                    ENERO: 1,
+                    FEBRERO: 2,
+                    MARZO: 3,
+                    ABRIL: 4,
+                    MAYO: 5,
+                    JUNIO: 6,
+                    JULIO: 7,
+                    AGOSTO: 8,
+                    SEPTIEMBRE: 9,
+                    OCTUBRE: 10,
+                    NOVIEMBRE: 11,
+                    DICIEMBRE: 12,
+                };
+                // Convertir los meses a números
+                const num1 = meses[mes1];
+                const num2 = meses[mes2];
+                // Comparar los años primero, y si son iguales, comparar los meses
+                if (año1 < año2) {
+                    return -1;
+                } else if (año1 > año2) {
+                    return 1;
+                } else {
+                    if (num1 < num2) {
+                        return -1;
+                    } else if (num1 > num2) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                }
+            },
+        },
+    ];
+
+    const initialColumns = [
+        { field: "cedula", headerName: "Cédula", width: 100 },
         { field: "quantity", headerName: "Meta", width: 140, editable: true },
         { field: "clean_desk", headerName: "Clean Desk", width: 80, editable: true },
         { field: "quality", headerName: "Calidad", width: 80, editable: true },
@@ -229,35 +344,79 @@ const AnalisisMetas = () => {
             },
         },
         {
-            field: "actions",
-            type: "actions",
-            headerName: "Acciones",
-            width: 100,
-            cellClassName: "actions",
-            getActions: ({ id }) => {
-                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
-                if (isInEditMode) {
-                    return [
-                        <GridActionsCellItem
-                            icon={<SaveOutlinedIcon />}
-                            label="Save"
-                            key={id}
-                            sx={{
-                                color: "primary.main",
-                            }}
-                            onClick={handleSaveClick(id)}
-                        />,
-                        <GridActionsCellItem key={id} icon={<CancelOutlinedIcon />} label="Cancel" className="textPrimary" onClick={handleCancelClick(id)} />,
-                    ];
+            field: "execution_date",
+            headerName: "Fecha de la ejecución de la meta",
+            width: 150,
+            sortComparator: (v1, v2) => {
+                // Extraer el mes y el año de los valores
+                const [mes1, año1] = v1.split("-");
+                const [mes2, año2] = v2.split("-");
+                // Crear un objeto con los nombres de los meses en español y sus números correspondientes
+                const meses = {
+                    ENERO: 1,
+                    FEBRERO: 2,
+                    MARZO: 3,
+                    ABRIL: 4,
+                    MAYO: 5,
+                    JUNIO: 6,
+                    JULIO: 7,
+                    AGOSTO: 8,
+                    SEPTIEMBRE: 9,
+                    OCTUBRE: 10,
+                    NOVIEMBRE: 11,
+                    DICIEMBRE: 12,
+                };
+                // Convertir los meses a números
+                const num1 = meses[mes1];
+                const num2 = meses[mes2];
+                // Comparar los años primero, y si son iguales, comparar los meses
+                if (año1 < año2) {
+                    return -1;
+                } else if (año1 > año2) {
+                    return 1;
+                } else {
+                    if (num1 < num2) {
+                        return -1;
+                    } else if (num1 > num2) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
                 }
-
-                return [
-                    <GridActionsCellItem key={id} icon={<EditOutlinedIcon />} label="Edit" onClick={handleEditClick(id)} />,
-                    <GridActionsCellItem key={id} icon={<DeleteOutlineOutlinedIcon />} label="Delete" onClick={() => handleDeleteClick(id)} />,
-                ];
             },
         },
+        // {
+        //     field: "actions",
+        //     type: "actions",
+        //     headerName: "Acciones",
+        //     width: 100,
+        //     cellClassName: "actions",
+        //     getActions: ({ id }) => {
+        //         const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+        //         if (isInEditMode) {
+        //             return [
+        //                 <GridActionsCellItem
+        //                     icon={<SaveOutlinedIcon />}
+        //                     label="Save"
+        //                     key={id}
+        //                     sx={{
+        //                         color: "primary.main",
+        //                     }}
+        //                     onClick={handleSaveClick(id)}
+        //                 />,
+        //                 <GridActionsCellItem key={id} icon={<CancelOutlinedIcon />} label="Cancel" className="textPrimary" onClick={handleCancelClick(id)} />,
+        //             ];
+        //         }
+
+        //         return [
+        //             <GridActionsCellItem key={id} icon={<EditOutlinedIcon />} label="Edit" onClick={handleEditClick(id)} />,
+        //             <GridActionsCellItem key={id} icon={<DeleteOutlineOutlinedIcon />} label="Delete" onClick={() => handleDeleteClick(id)} />,
+        //         ];
+        //     },
+        // },
     ];
+
+    const [columns, setColumns] = useState(initialColumns);
 
     const handleCloseSnackbar = (event, reason) => {
         if (reason === "clickaway") {
@@ -381,18 +540,18 @@ const AnalisisMetas = () => {
     };
 
     const months = [
-        { value: "ENERO", label: "ENERO" },
-        { value: "FEBRERO", label: "FEBRERO" },
-        { value: "MARZO", label: "MARZO" },
-        { value: "ABRIL", label: "ABRIL" },
-        { value: "MAYO", label: "MAYO" },
-        { value: "JUNIO", label: "JUNIO" },
-        { value: "JULIO", label: "JULIO" },
-        { value: "AGOSTO", label: "AGOSTO" },
-        { value: "SEPTIEMBRE", label: "SEPTIEMBRE" },
-        { value: "OCTUBRE", label: "OCTUBRE" },
-        { value: "NOVIEMBRE", label: "NOVIEMBRE" },
-        { value: "DICIEMBRE", label: "DICIEMBRE" },
+        { value: "enero", label: "ENERO" },
+        { value: "febrero", label: "FEBRERO" },
+        { value: "marzo", label: "MARZO" },
+        { value: "abril", label: "ABRIL" },
+        { value: "mayo", label: "MAYO" },
+        { value: "junio", label: "JUNIO" },
+        { value: "julio", label: "JULIO" },
+        { value: "agosto", label: "AGOSTO" },
+        { value: "septiembre", label: "SEPTIEMBRE" },
+        { value: "octubre", label: "OCTUBRE" },
+        { value: "noviembre", label: "NOVIEMBRE" },
+        { value: "diciembre", label: "DICIEMBRE" },
     ];
 
     useEffect(() => {
@@ -412,9 +571,12 @@ const AnalisisMetas = () => {
         event.preventDefault();
 
         try {
-            const response = await fetch(`https://insights-api-dev.cyc-bpo.com/goals/?month=${monthRef.current.value}-${yearRef.current.value}&cedula=${cedula}`, {
-                method: "GET",
-            });
+            const response = await fetch(
+                `https://insights-api-dev.cyc-bpo.com/goals/?date=${monthRef.current.value}-${yearRef.current.value}&column=${columnRef.current.value}`,
+                {
+                    method: "GET",
+                }
+            );
 
             if (!response.ok) {
                 if (response.status === 500) {
@@ -475,6 +637,21 @@ const AnalisisMetas = () => {
                                 : "En espera",
                     };
                 });
+                // Create a new columns array based on the initial columns but with the field name changed
+                const updatedColumns = initialColumns.map((column) => {
+                    if (column.field === "last_update") {
+                        // Change the field and header name for 'last_update' column
+                        return {
+                            ...column,
+                            field: "history_date",
+                            headerName: "Fecha de modificación",
+                        };
+                    }
+                    return column; // Keep other columns unchanged
+                });
+
+                // Update the 'columns' state with the modified columns
+                setColumns(updatedColumns);
                 setRows(modifiedData);
             }
         } catch (error) {
@@ -514,8 +691,22 @@ const AnalisisMetas = () => {
                                 </MenuItem>
                             ))}
                         </TextField>
+                        <TextField required defaultValue="" sx={{ width: "15rem" }} size="small" variant="filled" select label="Columna" inputRef={columnRef}>
+                            <MenuItem value={"entrega"} key={1}>
+                                Fecha de la Meta
+                            </MenuItem>
+                            <MenuItem value={"ejecucion"} key={2}>
+                                Fecha de la Ejecución
+                            </MenuItem>
+                        </TextField>
                         <Button variant="outlined" size="small" type="submit">
                             Filtrar
+                        </Button>
+                        <Button onClick={handleChangeColumns()} variant="outlined" size="small" type="button">
+                            Entrega
+                        </Button>
+                        <Button onClick={handleChangeColumns()} variant="outlined" size="small" type="button">
+                            Ejecución
                         </Button>
                     </Box>
                     <DataGrid
